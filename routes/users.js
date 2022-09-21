@@ -1,35 +1,52 @@
+const userRouter = require('express').Router();
+
 const { celebrate, Joi } = require('celebrate');
-const router = require('express').Router();
+const auth = require('../middlewares/auth');
 const {
+  createUser,
   getUsers,
-  getUserById,
-  updateUser,
-  updateUserAvatar,
-  getCurrentUser,
-} = require('../controller/users');
-const { linkRegEx } = require('../utils/RegEx');
+  getUser,
+  qetUserById,
+  updateProfile,
+  updateAvatar,
+  login,
+} = require('../controllers/users');
+const { regExpUrl, regExpId } = require('../utils/constants');
 
-router.get('/', getUsers);
-
-router.get('/me', getCurrentUser);
-
-router.get('/:userId', celebrate({
-  params: Joi.object().keys({
-    userId: Joi.string().required().hex().length(24),
-  }),
-}), getUserById);
-
-router.patch('/me', celebrate({
+userRouter.post('/signup', celebrate({
   body: Joi.object().keys({
     name: Joi.string().min(2).max(30),
     about: Joi.string().min(2).max(30),
+    avatar: Joi.string()
+      .pattern(regExpUrl),
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
   }),
-}), updateUser);
-
-router.patch('/me/avatar', celebrate({
+}), createUser);
+userRouter.post('/signin', celebrate({
   body: Joi.object().keys({
-    avatar: Joi.string().required().pattern(linkRegEx),
+    email: Joi.string().required().email(),
+    password: Joi.string().required(),
   }),
-}), updateUserAvatar);
+}), login);
+userRouter.get('/users', auth, getUsers);
+userRouter.get('/users/me', auth, getUser);
+userRouter.get('/users/:userId', celebrate({
+  params: Joi.object().keys({
+    userId: Joi.string().pattern(regExpId).required(),
+  }),
+}), auth, qetUserById);
+userRouter.patch('/users/me', celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().min(2).max(30).required(),
+    about: Joi.string().min(2).max(30).required(),
+  }),
+}), auth, updateProfile);
+userRouter.patch('/users/me/avatar', celebrate({
+  body: Joi.object().keys({
+    avatar: Joi.string().required()
+      .pattern(regExpUrl),
+  }),
+}), auth, updateAvatar);
 
-module.exports = router;
+module.exports = { userRouter };

@@ -1,42 +1,38 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
+const { regExpUrl } = require('../utils/constants');
 
 const cardSchema = new mongoose.Schema({
   name: {
     type: String,
+    required: [true, 'Необходимо ввести имя карточки'],
     minlength: 2,
     maxlength: 30,
-    required: true,
   },
-
   link: {
     type: String,
-    required: true,
+    required: [true, 'Необходимо ввести ссылку на изображение'],
     validate: {
-      validator(link) {
-        return validator.isURL(link);
+      validator(v) {
+        return regExpUrl.test(v);
       },
-      message: 'Введен некорректный URL',
     },
   },
-
   owner: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'users',
+    ref: 'user',
     required: true,
   },
-
-  likes: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'users',
-    default: [],
-  }],
-  createdAt: {
+  likes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'user',
+      default: [],
+    },
+  ],
+  crearedAt: {
     type: Date,
-    default: Date.now(),
+    default: Date.now,
   },
-}, {
-  versionKey: false,
-});
+}, { versionKey: false });
 
 module.exports = mongoose.model('card', cardSchema);
